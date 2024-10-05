@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageOps
 import os
 import requests
 from io import BytesIO
@@ -47,13 +47,22 @@ def colorizer(img):
     return colorized
 
 
+st.set_page_config(page_title="Colorizer",
+                    page_icon="🎨",
+                    layout="wide")
+st.markdown("# Color your B&W Image")
+
+
     
-st.write("""# Color your Black and white image""")
+# st.write("""# Color your Black and white image""")
 
 st.write("App to turn colorize your B&W images.")
 
 
 file = st.sidebar.file_uploader("Please upload an image file", type=["jpg", "png"])
+download_button_placeholder = st.sidebar.empty()
+download_enabled = False  # Flag to control button state
+buffered = None  # Placeholder for image data
 
 if st.button("Load a random B&W image"):
     try:
@@ -82,6 +91,27 @@ if img is not None:
     color = colorizer(img)
     
     st.image(color, use_column_width=True)
+
+    colorized_pil = Image.fromarray(color)
+
+    buffered = BytesIO()
+    colorized_pil.save(buffered, format="PNG")
+    buffered.seek(0)
+
+    # Enable the download button after the colorized image is generated
+    download_enabled = True
+
+# Sidebar: Display download button (enabled after image is processed)
+if download_enabled:
+    download_button_placeholder.download_button(
+        label="Download Colorized Image",
+        data=buffered,
+        file_name="colorized_image.png",
+        mime="image/png"
+    )
+else:
+    # Display a disabled button before the image is generated
+    download_button_placeholder.button(label="Download Colorized Image", disabled=True)
 
 print("done!")
 
